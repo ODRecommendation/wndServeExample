@@ -17,38 +17,33 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
       val requestJson = request.body.toString()
       val requestMap = mapper.readValue(requestJson, classOf[Map[String, String]])
 
-      val localColumnInfo = ColumnFeatureInfo(
-        wideBaseCols = Array("loyalty_ind", "hvb_flg", "agent_smb_flg", "customer_type_nm", "sales_flg", "atcSKU", "GENDER_CD"),
-        wideBaseDims = Array(2, 2, 2, 3, 2, 10, 3),
-        wideCrossCols = Array("loyalty-ct"),
-        wideCrossDims = Array(100),
-        indicatorCols = Array("customer_type_nm", "GENDER_CD"),
-        indicatorDims = Array(3, 3),
-        embedCols = Array("userId", "itemId"),
-        embedInDims = Array(10, 10),
-        embedOutDims = Array(20, 11),
-        continuousCols = Array("interval_avg_day_cnt", "STAR_RATING_AVG", "reviews_cnt")
-      )
-      println("localColumnInfo is constructed")
-
-      val joined = assemblyFeature(requestMap, atcArray, localColumnInfo, 100).toArray
+      val (joined, atcMap) = assemblyFeature(requestMap, atcArray, localColumnInfo, 100)
       println(joined)
 
-      val train = createUserItemFeatureMap(joined.asInstanceOf[Array[Map[String, Any]]], localColumnInfo, "wide_n_deep")
+      val train = createUserItemFeatureMap(joined.toArray.asInstanceOf[Array[Map[String, Any]]], localColumnInfo, "wide_n_deep")
       val trainSample = train.map(x => x.sample)
 
       println("sample is created, ready to predict")
 
       val localPredictor = LocalPredictor(params.wndModel.get)
-      val prediction = localPredictor.predict(trainSample).map( p => {
-        val _output = p.toTensor[Float]
+      val prediction = localPredictor.predict(trainSample)
+        .zipWithIndex.map( p => {
+        val id = p._2.toString
+        val _output = p._1.toTensor[Float]
         val predict: Int = _output.max(1)._2.valueAt(1).toInt
         val probability = Math.exp(_output.valueAt(predict).toDouble)
-        Map("predict" -> predict, "probability" -> probability)
+        Map("predict" -> predict, "probability" -> probability, "id" -> id)
       })
 
+      val prediction1 = prediction.map( x => {
+        val result = x.map{ case (k ,v) => (k, (v, atcMap.getOrElse(v.toString, "")))}
+        val predict = result("predict")._1
+        val probability = result("probability")._1
+        val atcSku = result("id")._2
+        Map("predict" -> predict, "probability" -> probability, "atcSku" -> atcSku)
+      })
 
-      val predictionJson = mapper.writeValueAsString(prediction)
+      val predictionJson = mapper.writeValueAsString(prediction1)
 
       Ok(Json.parse(predictionJson.toString))
 //      Ok(Json.obj("status" -> "ok"))

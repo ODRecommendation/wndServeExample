@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.zoo.models.recommendation.ColumnFeatureInfo
 
 import scala.concurrent.duration.Duration
 import scala.io.Source
@@ -26,6 +27,20 @@ trait LoadModel {
   val atcArray = Source.fromFile("./modelFiles/ATCSKU.csv")
     .getLines().drop(1)
     .flatMap(_.split(",")).toArray
+
+  val localColumnInfo = ColumnFeatureInfo(
+    wideBaseCols = Array("loyalty_ind", "hvb_flg", "agent_smb_flg", "customer_type_nm", "sales_flg", "atcSKU", "GENDER_CD"),
+    wideBaseDims = Array(2, 2, 2, 3, 2, 10, 3),
+    wideCrossCols = Array("loyalty-ct"),
+    wideCrossDims = Array(100),
+    indicatorCols = Array("customer_type_nm", "GENDER_CD"),
+    indicatorDims = Array(3, 3),
+    embedCols = Array("userId", "itemId"),
+    embedInDims = Array(10, 10),
+    embedOutDims = Array(20, 11),
+    continuousCols = Array("interval_avg_day_cnt", "STAR_RATING_AVG", "reviews_cnt")
+  )
+  println("localColumnInfo is constructed")
 
   val actorSystem = ActorSystem()
   val scheduler: Scheduler = actorSystem.scheduler

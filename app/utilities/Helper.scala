@@ -339,6 +339,8 @@ trait Helper {
                        bucketSize: Int
                      ) = {
     val atcArray = requestMap("ATC_SKU").asInstanceOf[Seq[String]]
+    val atcMap = atcArray.zipWithIndex.map(x => (x._2.toString, x._1)).toMap
+    println(atcMap)
 
     val joined = atcArray.map(
       x => {
@@ -377,7 +379,7 @@ trait Helper {
         joined
       }
     )
-    joined
+    (joined, atcMap)
   }
 
   // setup wide tensor

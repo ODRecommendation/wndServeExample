@@ -1,5 +1,7 @@
 package controllers
 
+import java.text.SimpleDateFormat
+
 import javax.inject._
 import models.LoadModel
 import play.api.libs.json._
@@ -22,17 +24,15 @@ class VersionCheckController @Inject()(cc: ControllerComponents)
     */
 
   def index = Action {
-//    val df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
-//    val modelEpoch = params.wndModelVersion.get
-////    val modelVersion = formatDate(modelEpoch, df).get
-//    val modelVersion = df.format(modelEpoch)
-//    Ok(
-//      Json.obj(
-//        "status" -> "ok",
-//        "subModelVersion" -> modelVersion
-//      )
-//    )
-
-    Ok(Json.obj("status" -> "ok"))
+    val df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
+    val modelEpoch = params.wndModelVersion.get
+//    val modelVersion = formatDate(modelEpoch, df).get
+    val modelVersion = df.format(modelEpoch)
+    Ok(
+      Json.obj(
+        "status" -> "ok",
+        "wndModelVersion" -> modelVersion
+      )
+    )
   }
 }
