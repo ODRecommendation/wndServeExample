@@ -2,7 +2,6 @@ package controllers
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.LocalPredictor
-import com.intel.analytics.zoo.models.recommendation.ColumnFeatureInfo
 import javax.inject._
 import models.LoadModel
 import play.api.libs.json._

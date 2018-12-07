@@ -28,6 +28,7 @@ class VersionCheckController @Inject()(cc: ControllerComponents)
     val modelEpoch = params.wndModelVersion.get
 //    val modelVersion = formatDate(modelEpoch, df).get
     val modelVersion = df.format(modelEpoch)
+
     Ok(
       Json.obj(
         "status" -> "ok",
