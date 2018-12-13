@@ -21,6 +21,4 @@ class HealthCheckController @Inject()(cc: ControllerComponents)
   def index = Action {
       Ok(Json.obj("status" -> "ok"))
     }
-//    futureHealth.map( i => OK(i))
-//    Ok(Json.obj("status" -> "ok"))
 }

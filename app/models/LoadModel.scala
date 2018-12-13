@@ -6,7 +6,6 @@ import akka.actor.{ActorSystem, Scheduler}
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.zoo.models.recommendation.ColumnFeatureInfo
 
 import scala.concurrent.duration.Duration
@@ -63,10 +62,6 @@ trait LoadModel {
     interval = Duration(5, TimeUnit.SECONDS),
     runnable = task)
 
-//  val conf = new SparkConf().setAppName("WideAndDeepExample").setMaster("local[*]")
-//  val sc = NNContext.initNNContext(conf)
-//  val spark = SparkSession.builder().config(conf).getOrCreate()
-//  val sqlContext = spark.sqlContext
   val mapper = new ObjectMapper
   mapper.registerModule(DefaultScalaModule)
 

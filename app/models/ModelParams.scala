@@ -2,13 +2,11 @@ package models
 
 import java.io.File
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
-
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.recommendation.Recommender
-import com.intel.analytics.bigdl.numeric.NumericFloat
-
 import scala.io.Source
 
 

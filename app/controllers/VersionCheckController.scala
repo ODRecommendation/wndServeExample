@@ -26,7 +26,6 @@ class VersionCheckController @Inject()(cc: ControllerComponents)
   def index = Action {
     val df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
     val modelEpoch = params.wndModelVersion.get
-//    val modelVersion = formatDate(modelEpoch, df).get
     val modelVersion = df.format(modelEpoch)
 
     Ok(
