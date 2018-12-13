@@ -19,13 +19,15 @@ trait LoadModel {
 
   val params = ModelParams(
     "./modelFiles/WDModel",
+    "./modelFiles/userIndexer.zip",
+    "./modelFiles/itemIndexer.zip",
     "./modelFiles/ATCSKU.csv",
     scala.util.Properties.envOrElse("configEnvironmewnt", "dev")
   )
 
-  val atcArray = Source.fromFile("./modelFiles/ATCSKU.csv")
-    .getLines().drop(1)
-    .flatMap(_.split(",")).toArray
+//  val atcArray = Source.fromFile("./modelFiles/ATCSKU.csv")
+//    .getLines().drop(1)
+//    .flatMap(_.split(",")).toArray
 
   val localColumnInfo = ColumnFeatureInfo(
     wideBaseCols = Array("loyalty_ind", "hvb_flg", "agent_smb_flg", "customer_type_nm", "sales_flg", "atcSKU", "GENDER_CD"),

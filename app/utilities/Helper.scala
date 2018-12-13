@@ -1,12 +1,18 @@
 package utilities
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.intel.analytics.bigdl.dataset.{Sample, TensorSample}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.models.recommendation.{ColumnFeatureInfo, UserItemFeature}
+import ml.combust.mleap.runtime.frame.Transformer
+import ml.combust.mleap.runtime.serialization.FrameReader
+import models.LoadModel
 
-trait Helper {
+import scala.collection.immutable.{List, Map}
+
+trait Helper{
 
   def categoricalFromVocabList(vocabList: Array[String]): (String) => Int = {
     val func = (sth: String) => {
@@ -25,31 +31,31 @@ trait Helper {
   }
 
   def assemblyFeature(
-                       requestMap: Map[String, Any],
+                       requestMap2: Map[String, Any],
                        ATCSKUVocabs: Array[String],
                        columnInfo: ColumnFeatureInfo,
                        bucketSize: Int
                      ) = {
-    val atcArray = requestMap("ATC_SKU").asInstanceOf[Seq[String]]
+    val atcArray = requestMap2("ATC_SKU").asInstanceOf[Seq[String]]
     val atcMap = atcArray.zipWithIndex.map(x => (x._2.toString, x._1)).toMap
     println(atcMap)
 
     val joined = atcArray.map(
       x => {
         val ATC_SKU = categoricalFromVocabList(ATCSKUVocabs)(x)
-        val customer_type_nm = categoricalFromVocabList(Array("CONSUMER", "BUSINESS", "HOME OFFICE"))(requestMap("customer_type_nm").toString)
-        val GENDER_CD = categoricalFromVocabList(Array("M", "F", "U"))(requestMap("GENDER_CD").toString)
-        val loyalty_ct = buckBucket(bucketSize)(requestMap("loyalty_ind").toString, requestMap("customer_type_nm").toString)
-        val loyalty_ind = requestMap("loyalty_ind").toString.toInt
-        val od_card_user_ind = requestMap("od_card_user_ind").toString.toInt
-        val hvb_flg = requestMap("hvb_flg").toString.toInt
-        val agent_smb_flg = requestMap("agent_smb_flg").toString.toInt
-        val interval_avg_day_cnt = requestMap("interval_avg_day_cnt").toString.toDouble
-        val SKU_NUM = requestMap("itemId").toString.toInt
-        val STAR_RATING_AVG = requestMap("STAR_RATING_AVG").toString.toDouble
-        val reviews_cnt = requestMap("reviews_cnt").toString.toInt
-        val sales_flg = requestMap("sales_flg").toString.toInt
-        val userId = requestMap("userId").toString.toInt
+        val customer_type_nm = categoricalFromVocabList(Array("CONSUMER", "BUSINESS", "HOME OFFICE"))(requestMap2("customer_type_nm").toString)
+        val GENDER_CD = categoricalFromVocabList(Array("M", "F", "U"))(requestMap2("GENDER_CD").toString)
+        val loyalty_ct = buckBucket(bucketSize)(requestMap2("loyalty_ind").toString, requestMap2("customer_type_nm").toString)
+        val loyalty_ind = requestMap2("loyalty_ind").toString.toInt
+        val od_card_user_ind = requestMap2("od_card_user_ind").toString.toInt
+        val hvb_flg = requestMap2("hvb_flg").toString.toInt
+        val agent_smb_flg = requestMap2("agent_smb_flg").toString.toInt
+        val interval_avg_day_cnt = requestMap2("interval_avg_day_cnt").toString.toDouble
+        val SKU_NUM = requestMap2("itemId").toString.toInt
+        val STAR_RATING_AVG = requestMap2("STAR_RATING_AVG").toString.toDouble
+        val reviews_cnt = requestMap2("reviews_cnt").toString.toInt
+        val sales_flg = requestMap2("sales_flg").toString.toInt
+        val userId = requestMap2("userId").toString.toInt
 
         val joined = Map(
           "atcSKU" -> ATC_SKU,
@@ -148,6 +154,31 @@ trait Helper {
       UserItemFeature(uid, iid, map2Sample(x, columnInfo, modelType))
     })
     sample
+  }
+
+  def leapTransform(
+                   requestString: String,
+                   inputCol: String,
+                   outputCol: String,
+                   transformer: Transformer,
+                   mapper: ObjectMapper
+                   ) = {
+    val schemaLeap = Map(
+      "schema" -> Map(
+        "fields" -> List(
+          Map("type" -> "string", "name" -> inputCol)
+        )
+      ),
+      "rows" -> List(List(requestString))
+    )
+    println("schemaLeap is constructed")
+    val requestLF = mapper.writeValueAsString(schemaLeap)
+    val bytes = requestLF.getBytes("UTF-8")
+    val predict = FrameReader("ml.combust.mleap.json").fromBytes(bytes).get
+    val frame2 = transformer.transform(predict).get
+    val result1 = for (lf <- frame2.select(outputCol)) yield lf.dataset.head(0)
+    val result2 = result1.get.asInstanceOf[Double] + 1
+    result2
   }
 
 }

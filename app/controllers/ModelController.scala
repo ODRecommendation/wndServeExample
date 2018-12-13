@@ -15,14 +15,20 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
     try {
       val requestJson = request.body.toString()
       val requestMap = mapper.readValue(requestJson, classOf[Map[String, String]])
+      val sku = requestMap("userId")
+      val atc = requestMap("itemId")
+      val uid = leapTransform(sku, "COOKIE_ID", "userId", params.userIndexerModel.get, mapper)
+      val iid = leapTransform(atc, "SKU_NUM", "itemId", params.itemIndexerModel.get, mapper)
 
-      val (joined, atcMap) = assemblyFeature(requestMap, atcArray, localColumnInfo, 100)
+      val requestMap2 = requestMap + ("userId" -> uid.toInt, "itemId" -> iid.toInt)
+      println(requestMap2)
+
+      val (joined, atcMap) = assemblyFeature(requestMap2, params.atcArray.get, localColumnInfo, 100)
       println(joined)
 
       val train = createUserItemFeatureMap(joined.toArray.asInstanceOf[Array[Map[String, Any]]], localColumnInfo, "wide_n_deep")
       val trainSample = train.map(x => x.sample)
-
-      println("sample is created, ready to predict")
+      println("Sample is created, ready to predict")
 
       val localPredictor = LocalPredictor(params.wndModel.get)
       val prediction = localPredictor.predict(trainSample)
@@ -45,12 +51,10 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
       val predictionJson = mapper.writeValueAsString(prediction1)
 
       Ok(Json.parse(predictionJson.toString))
-//      Ok(Json.obj("status" -> "ok"))
     }
 
     catch{
       case e:Exception => BadRequest("Nah nah nah nah nah...this request contains bad characters...")
     }
-//    Ok(Json.obj("status" -> "ok"))
   }
 }
