@@ -26,11 +26,17 @@ class VersionCheckController @Inject()(cc: ControllerComponents)
     val df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
     val modelEpoch = params.wndModelVersion.get
     val modelVersion = df.format(modelEpoch)
+    val userIndexerModelEpoch = params.userIndexerModelVersion.get
+    val userIndexerModelVersion = df.format(userIndexerModelEpoch)
+    val itemIndexerModelEpoch = params.itemIndexerModelVersion.get
+    val itemIndexerModelVersion = df.format(itemIndexerModelEpoch)
 
     Ok(
       Json.obj(
         "status" -> "ok",
-        "wndModelVersion" -> modelVersion
+        "wndModelVersion" -> modelVersion,
+        "userIndexerModelVersion" -> userIndexerModelVersion,
+        "itemIndexerModelVersion" -> itemIndexerModelVersion
       )
     )
   }
