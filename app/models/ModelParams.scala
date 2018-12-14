@@ -150,21 +150,4 @@ object ModelParams {
     params
   }
 
-//  def loadModelFile(path: String, currentDir: String): Option[Transformer] = {
-//    lock.readLock().lock()
-//    try {
-//      Some(
-//        (
-//          for (bundleFile <- managed(BundleFile(s"jar:file:$currentDir$path"))) yield {
-//            bundleFile.loadMleapBundle().get
-//          }
-//          ).opt.get.root
-//      )
-//    }
-//    catch {
-//      case e: Exception => println(s"Cannot load model at $currentDir$path"); None
-//    }
-//    finally { lock.readLock().unlock() }
-//  } b b
-
 }

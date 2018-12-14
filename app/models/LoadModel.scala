@@ -24,10 +24,6 @@ trait LoadModel {
     scala.util.Properties.envOrElse("configEnvironmewnt", "dev")
   )
 
-//  val atcArray = Source.fromFile("./modelFiles/ATCSKU.csv")
-//    .getLines().drop(1)
-//    .flatMap(_.split(",")).toArray
-
   val localColumnInfo = ColumnFeatureInfo(
     wideBaseCols = Array("loyalty_ind", "hvb_flg", "agent_smb_flg", "customer_type_nm", "sales_flg", "atcSKU", "GENDER_CD"),
     wideBaseDims = Array(2, 2, 2, 3, 2, 10, 3),
