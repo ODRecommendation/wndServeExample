@@ -1,5 +1,5 @@
 # Wide&Deep serve example
-Wide&Deep model serve example using BigDL, Mleap, and Play
+Fast inference Wide&Deep model trained by BigDL and Spark using BigDL, Mleap, and Play
 
 ## How to run
 sbt runProd
