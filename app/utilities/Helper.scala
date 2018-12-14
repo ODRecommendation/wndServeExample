@@ -8,13 +8,12 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.models.recommendation.{ColumnFeatureInfo, UserItemFeature}
 import ml.combust.mleap.runtime.frame.Transformer
 import ml.combust.mleap.runtime.serialization.FrameReader
-import models.LoadModel
 
 import scala.collection.immutable.{List, Map}
 
 trait Helper{
 
-  def categoricalFromVocabList(vocabList: Array[String]): (String) => Int = {
+  def categoricalFromVocabList(vocabList: Array[String]): String => Int = {
     val func = (sth: String) => {
       val default: Int = 0
       val start: Int = 1
@@ -171,7 +170,6 @@ trait Helper{
       ),
       "rows" -> List(List(requestString))
     )
-    println("schemaLeap is constructed")
     val requestLF = mapper.writeValueAsString(schemaLeap)
     val bytes = requestLF.getBytes("UTF-8")
     val predict = FrameReader("ml.combust.mleap.json").fromBytes(bytes).get

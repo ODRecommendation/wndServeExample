@@ -7,9 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.models.recommendation.ColumnFeatureInfo
-
 import scala.concurrent.duration.Duration
-import scala.io.Source
 
 trait LoadModel {
 

@@ -8,15 +8,26 @@ import play.api.libs.json._
 import play.api.mvc._
 import utilities.Helper
 
+/**
+  * This controller creates an `Action` to handle recommendation prediction.
+  */
+
 @Singleton
 class ModelController @Inject()(cc: ControllerComponents) extends AbstractController(cc) with Helper with LoadModel {
+
+  /**
+    * Create an Action to return @ModelController status.
+    * The configuration in the `routes` file means that this method
+    * will be called when the application receives a `POST` request with
+    * a path of `/wndModel`.
+    */
 
   def wndModel: Action[JsValue] = Action(parse.json) { request =>
     try {
       val requestJson = request.body.toString()
       val requestMap = mapper.readValue(requestJson, classOf[Map[String, String]])
-      val sku = requestMap("userId")
-      val atc = requestMap("itemId")
+      val sku = requestMap("COOKIE_ID")
+      val atc = requestMap("SKU_NUM")
       val uid = leapTransform(sku, "COOKIE_ID", "userId", params.userIndexerModel.get, mapper)
       val iid = leapTransform(atc, "SKU_NUM", "itemId", params.itemIndexerModel.get, mapper)
 
@@ -24,7 +35,6 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
       println(requestMap2)
 
       val (joined, atcMap) = assemblyFeature(requestMap2, params.atcArray.get, localColumnInfo, 100)
-      println(joined)
 
       val train = createUserItemFeatureMap(joined.toArray.asInstanceOf[Array[Map[String, Any]]], localColumnInfo, "wide_n_deep")
       val trainSample = train.map(x => x.sample)
@@ -54,7 +64,7 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
     }
 
     catch{
-      case e:Exception => BadRequest("Nah nah nah nah nah...this request contains bad characters...")
+      case _:Exception => BadRequest("Nah nah nah nah nah...this request contains bad characters...")
     }
   }
 }
