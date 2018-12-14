@@ -41,11 +41,14 @@ assemblyMergeStrategy in assembly := {
   case referenceOverrides if referenceOverrides.contains("reference-overrides.conf") =>
     // Keep the content for all reference-overrides.conf files
     MergeStrategy.concat
-  case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
-  case PathList(ps @ _*) if ps.last endsWith ".class" => MergeStrategy.first
-  case PathList(ps @ _*) if ps.last endsWith ".properties" => MergeStrategy.first
-  case "application.conf"                            => MergeStrategy.concat
-  case "unwanted.txt"                                => MergeStrategy.discard
+  case PathList("javax", "servlet", xs@_*) => MergeStrategy.first
+  case PathList(ps@_*) if ps.last endsWith ".class" => MergeStrategy.first
+  case PathList(ps@_*) if ps.last endsWith ".properties" => MergeStrategy.first
+  case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
+  case PathList(ps @ _*) if ps.last endsWith ".proto" => MergeStrategy.first
+  //  case PathList("org", "slf4j", xs@_*) => MergeStrategy.deduplicate
+  case "application.conf" => MergeStrategy.concat
+  case "unwanted.txt" => MergeStrategy.discard
   case PathList("META-INF", "services", "org.apache.hadoop.fs.FileSystem") => MergeStrategy.filterDistinctLines
   case x =>
     // For all the other files, use the default sbt-assembly merge strategy
