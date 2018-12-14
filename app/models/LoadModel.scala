@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.models.recommendation.ColumnFeatureInfo
+
 import scala.concurrent.duration.Duration
 
 trait LoadModel {
@@ -15,7 +16,7 @@ trait LoadModel {
   println("BigDL localMode is: " + System.getProperty("bigdl.localMode"))
   Engine.init
 
-  val params = ModelParams(
+  var params = ModelParams(
     "./modelFiles/WDModel",
     "./modelFiles/userIndexer.zip",
     "./modelFiles/itemIndexer.zip",

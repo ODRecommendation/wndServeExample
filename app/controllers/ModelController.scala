@@ -1,5 +1,7 @@
 package controllers
 
+import java.nio.file.{Files, Paths}
+
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.LocalPredictor
 import javax.inject._
@@ -30,6 +32,8 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
       val atc = requestMap("SKU_NUM")
       val uid = leapTransform(sku, "COOKIE_ID", "userId", params.userIndexerModel.get, mapper)
       val iid = leapTransform(atc, "SKU_NUM", "itemId", params.itemIndexerModel.get, mapper)
+
+      println(Files.exists(Paths.get("./modelFiles/userIndexer.zip")))
 
       val requestMap2 = requestMap + ("userId" -> uid.toInt, "itemId" -> iid.toInt)
       println(requestMap2)

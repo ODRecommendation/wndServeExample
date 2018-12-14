@@ -1,7 +1,7 @@
 package models
 
 import java.io.File
-import java.nio.file.{Files, Paths}
+import java.nio.file.Paths
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
@@ -58,9 +58,9 @@ object ModelParams {
     if (env == "prod" || env == "canary") "ecomdatascience-p" else "ecomdatascience-np",
     loadBigDL(wndModelPath),
     loadVersion(wndModelPath),
-    loadMleap(currentDir, userIndexerModelPath),
+    loadMleap(userIndexerModelPath),
     loadVersion(userIndexerModelPath),
-    loadMleap(currentDir, itemIndexerModelPath),
+    loadMleap(itemIndexerModelPath),
     loadVersion(itemIndexerModelPath),
     loadArrayFile(atcArrayPath),
     loadVersion(atcArrayPath)
@@ -82,24 +82,24 @@ object ModelParams {
 //  }
 
   def loadBigDL(path: String) = {
-    lock.readLock().lock()
-    if (new File(path).exists()) {
+    if (new File(currentDir+ "/" + path).exists()) {
+      lock.readLock().lock()
       try {
         Some(ZooModel.loadModel[Float](path).asInstanceOf[Recommender[Float]])
       }
           catch {
-            case e: Exception => println(s"Cannot load model at $path"); None
+            case e: Exception => println(s"Cannot load bigDL model at $currentDir$path"); None
           }
       finally { lock.readLock().unlock() }
     }
     else {
-      println(s"Cannot load model at $path")
+      println(s"Cannot update bigDL model at $currentDir$path")
       None
     }
   }
 
-  def loadMleap(currentDir: String, modelPath: String): Option[Transformer] = {
-    if (Files.exists(Paths.get(s"$currentDir/$modelPath"))) {
+  def loadMleap(modelPath: String): Option[Transformer] = {
+    if (new File(currentDir + "/" + modelPath).exists()) {
       lock.readLock().lock()
       try Some(
         (for (bundleFile <- managed(BundleFile(s"jar:file:$currentDir/$modelPath"))) yield {
@@ -109,26 +109,31 @@ object ModelParams {
       catch {
         case _: Exception => println(s"Cannot load Mleap model at $currentDir$modelPath"); None;
       }
-      finally { lock.readLock().unlock() }
+      finally {
+        lock.readLock().unlock()
+      }
     }
-    else None
+    else {
+      println(s"Cannot update Mleap model at $currentDir$modelPath")
+      None
+    }
   }
 
   def loadVersion(path: String): Option[Long] = {
     lock.readLock().lock()
-    try Some(new File(path).lastModified())
+    try Some(new File(currentDir + "/" + path).lastModified())
     catch {
-      case e: Exception => println(s"Cannot load model version at $path"); None
+      case _: Exception => println(s"Cannot load model version at $currentDir$path"); None
     }
     finally { lock.readLock().unlock() }
   }
 
   def loadArrayFile(path: String): Option[Array[String]] = {
     lock.readLock().lock()
-    try Some(Source.fromFile(path).getLines().drop(1)
+    try Some(Source.fromFile(currentDir + "/" + path).getLines().drop(1)
       .flatMap(_.split(",")).toArray)
     catch {
-      case e: Exception => println(s"Cannot load array at $path"); None
+      case _: Exception => println(s"Cannot load array at $currentDir$path"); None
     }
     finally { lock.readLock().unlock() }
   }
@@ -136,9 +141,9 @@ object ModelParams {
   def refresh(params: ModelParams): ModelParams = {
     params.wndModel = loadBigDL(params.wndModelPath)
     params.wndModelVersion = loadVersion(params.wndModelPath)
-    params.userIndexerModel = loadMleap(currentDir, params.userIndexerModelPath)
+    params.userIndexerModel = loadMleap(params.userIndexerModelPath)
     params.userIndexerModelVersion = loadVersion(params.userIndexerModelPath)
-    params.itemIndexerModel = loadMleap(currentDir, params.itemIndexerModelPath)
+    params.itemIndexerModel = loadMleap(params.itemIndexerModelPath)
     params.itemIndexerModelVersion = loadVersion(params.itemIndexerModelPath)
     params.atcArray = loadArrayFile(params.atcArrayPath)
     params.atcArrayVersion = loadVersion(params.atcArrayPath)
