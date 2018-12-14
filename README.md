@@ -1,6 +1,30 @@
 # Wide&Deep serve example using BigDL, Mleap, and Play
 A example on how to serve Wide&Deep model trained by BigDL and Spark using BigDL, Mleap, and Play
 
+## Requirements
+```scala
+scalaVersion := "2.11.12"
+
+val jacksonVersion = "2.6.7"
+val sparkVersion = "2.3.1"
+val analyticsZooVersion = "0.3.0"
+
+libraryDependencies += guice
+libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.7.1-spark_2.3.1" % analyticsZooVersion
+libraryDependencies += "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion
+libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.11.354"
+libraryDependencies += "ml.combust.mleap" %% "mleap-spark" % "0.12.0"
+libraryDependencies += "ml.combust.mleap" %% "mleap-spark-extension" % "0.12.0"
+libraryDependencies ++= Seq(
+  "org.apache.spark" %% "spark-core" % sparkVersion,
+  "org.apache.spark" %% "spark-mllib" % sparkVersion,
+  "org.apache.spark" %% "spark-sql" % sparkVersion
+)
+
+dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion
+dependencyOverrides += "com.google.guava" % "guava" % "17.0"
+```
+
 ## How to run
 ```scala
 sbt runProd
