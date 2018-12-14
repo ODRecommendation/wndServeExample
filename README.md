@@ -1,8 +1,10 @@
-# Wide&Deep serve example
-Fast inference Wide&Deep model trained by BigDL and Spark using BigDL, Mleap, and Play
+# Wide&Deep serve example using BigDL, Mleap, and Play
+A example on how to serve Wide&Deep model trained by BigDL and Spark using BigDL, Mleap, and Play
 
 ## How to run
+```scala
 sbt runProd
+```
 
 ## API Introduction
 
@@ -75,5 +77,11 @@ None
 ```
 **Notes:** `predict` = 1 means not recommend, `predict` = 2 means recommend.  
 **Error_message:** ""Nah nah nah nah nah...this request contains bad characters...""
+
+## Contact & Feedback
+
+ If you encounter bugs, feel free to submit an issue or pull request.
+ Also you can mail to:
+ * Luyang, Wang (tmacraft@hotmail.com)
 
 
