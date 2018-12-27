@@ -7,6 +7,7 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.recommendation.Recommender
 import ml.combust.bundle.BundleFile
@@ -42,6 +43,7 @@ object ModelParams {
 
   System.setProperty("bigdl.localMode", "true")
   println("BigDL localMode is: " + System.getProperty("bigdl.localMode"))
+  Engine.init
 
   def apply(
              wndModelPath: String,
