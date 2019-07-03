@@ -8,7 +8,7 @@
 *.xml
 *.class
 *.cache
-modelFiles/
+modelFiles/*
 
 # Ignore Play! working directory #
 bin/
