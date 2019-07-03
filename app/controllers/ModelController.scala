@@ -1,9 +1,6 @@
 package controllers
 
-import java.nio.file.{Files, Paths}
-
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim.LocalPredictor
 import javax.inject._
 import models.LoadModel
 import play.api.libs.json._
@@ -28,24 +25,22 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
     try {
       val requestJson = request.body.toString()
       val requestMap = mapper.readValue(requestJson, classOf[Map[String, String]])
-      val sku = requestMap("COOKIE_ID")
-      val atc = requestMap("SKU_NUM")
-      val uid = leapTransform(sku, "COOKIE_ID", "userId", params.userIndexerModel.get, mapper)
-      val iid = leapTransform(atc, "SKU_NUM", "itemId", params.itemIndexerModel.get, mapper)
+      println(requestMap)
 
-      println(Files.exists(Paths.get("./modelFiles/userIndexer.zip")))
+      val (joined, atcMap) = assemblyFeature(
+        requestMap,
+        params.dmaArray.get,
+        params.modelArray.get,
+        params.hrArray.get,
+        localColumnInfo,
+        100
+      )
 
-      val requestMap2 = requestMap + ("userId" -> uid.toInt, "itemId" -> iid.toInt)
-      println(requestMap2)
-
-      val (joined, atcMap) = assemblyFeature(requestMap2, params.atcArray.get, localColumnInfo, 100)
-
-      val train = createUserItemFeatureMap(joined.toArray.asInstanceOf[Array[Map[String, Any]]], localColumnInfo, "wide_n_deep")
+      val train = createUserItemFeatureMap(joined.asInstanceOf[Array[Map[String, Any]]], localColumnInfo, "wide_n_deep")
       val trainSample = train.map(x => x.sample)
       println("Sample is created, ready to predict")
 
-      val localPredictor = LocalPredictor(params.wndModel.get)
-      val prediction = localPredictor.predict(trainSample)
+      val prediction = params.wndModel.get.predict(trainSample)
         .zipWithIndex.map( p => {
         val id = p._2.toString
         val _output = p._1.toTensor[Float]
@@ -53,14 +48,15 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
         val probability = Math.exp(_output.valueAt(predict).toDouble)
         Map("predict" -> predict, "probability" -> probability, "id" -> id)
       })
+      println("predicting")
 
       val prediction1 = prediction.map( x => {
         val result = x.map{ case (k ,v) => (k, (v, atcMap.getOrElse(v.toString, "")))}
         val predict = result("predict")._1
         val probability = result("probability")._1
         val atcSku = result("id")._2
-        Map("predict" -> predict, "probability" -> probability, "atcSku" -> atcSku)
-      })
+        Map("predict" -> predict, "probability" -> probability, "couponId" -> atcSku)
+      }).filter(x => x("predict").toString == "2").sortWith(_.getOrElse("probability", 0.0).asInstanceOf[Double] > _.getOrElse("probability", 0.0).asInstanceOf[Double])
 
       val predictionJson = mapper.writeValueAsString(prediction1)
 
@@ -68,7 +64,7 @@ class ModelController @Inject()(cc: ControllerComponents) extends AbstractContro
     }
 
     catch{
-      case _:Exception => BadRequest("Nah nah nah nah nah...this request contains bad characters...")
+      case e:Exception => BadRequest(e.printStackTrace().toString)
     }
   }
 }

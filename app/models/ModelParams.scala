@@ -4,12 +4,10 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.optim.LocalPredictor
 import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.models.recommendation.Recommender
+import com.intel.analytics.zoo.models.recommendation.WideAndDeep
 import ml.combust.bundle.BundleFile
 import ml.combust.mleap.runtime.MleapSupport._
 import ml.combust.mleap.runtime.frame.Transformer
@@ -22,22 +20,31 @@ case class ModelParams(
                    wndModelPath: String,
                    userIndexerModelPath: String,
                    itemIndexerModelPath: String,
-                   atcArrayPath: String,
+                   candidatesArrayPath: String,
+                   dmaArrayPath: String,
+                   modelArrayPath: String,
+                   hrArrayPath: String,
                    env: String,
                    bucketName: String,
-                   var wndModel: Option[Recommender[Float]],
+                   var wndModel: Option[LocalPredictor[Float]],
                    var wndModelVersion: Option[Long],
                    var userIndexerModel: Option[Transformer],
                    var userIndexerModelVersion: Option[Long],
                    var itemIndexerModel: Option[Transformer],
                    var itemIndexerModelVersion: Option[Long],
-                   var atcArray: Option[Array[String]],
-                   var atcArrayVersion: Option[Long]
+                   var candidatesArray: Option[Array[String]],
+                   var candidatesArrayVersion: Option[Long],
+                   var dmaArray: Option[Array[String]],
+                   var dmaArrayVersion: Option[Long],
+                   var modelArray: Option[Array[String]],
+                   var modelArrayVersion: Option[Long],
+                   var hrArray: Option[Array[String]],
+                   var hrArrayVersion: Option[Long]
                  )
 
 object ModelParams {
 
-  private val s3client = AmazonS3ClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build()
+//  private val s3client = AmazonS3ClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build()
   private val lock: ReadWriteLock = new ReentrantReadWriteLock()
   private val currentDir = Paths.get(".").toAbsolutePath.toString
 
@@ -49,23 +56,35 @@ object ModelParams {
              wndModelPath: String,
              userIndexerModelPath: String,
              itemIndexerModelPath: String,
-             atcArrayPath: String,
+             candidatesArrayPath: String,
+             dmaArrayPath: String,
+             modelArrayPath: String,
+             hrArrayPath: String,
              env: String
            ): ModelParams = ModelParams(
     wndModelPath,
     userIndexerModelPath,
     itemIndexerModelPath,
-    atcArrayPath,
+    candidatesArrayPath,
+    dmaArrayPath: String,
+    modelArrayPath: String,
+    hrArrayPath: String,
     env,
     if (env == "prod" || env == "canary") "ecomdatascience-p" else "ecomdatascience-np",
-    loadBigDL(wndModelPath),
+    loadRecommender(wndModelPath),
     loadVersion(wndModelPath),
     loadMleap(userIndexerModelPath),
     loadVersion(userIndexerModelPath),
     loadMleap(itemIndexerModelPath),
     loadVersion(itemIndexerModelPath),
-    loadArrayFile(atcArrayPath),
-    loadVersion(atcArrayPath)
+    loadArrayFile(candidatesArrayPath),
+    loadVersion(candidatesArrayPath),
+    loadArrayFile(dmaArrayPath),
+    loadVersion(dmaArrayPath),
+    loadArrayFile(modelArrayPath),
+    loadVersion(modelArrayPath),
+    loadArrayFile(hrArrayPath),
+    loadVersion(hrArrayPath)
   )
 
 //  def downloadModel(params: ModelParams): Any = {
@@ -83,21 +102,15 @@ object ModelParams {
 //    finally { lock.writeLock().unlock() }
 //  }
 
-  def loadBigDL(path: String) = {
-    if (new File(currentDir+ "/" + path).exists()) {
-      lock.readLock().lock()
-      try {
-        Some(ZooModel.loadModel[Float](path).asInstanceOf[Recommender[Float]])
-      }
-          catch {
-            case e: Exception => println(s"Cannot load bigDL model at $currentDir$path"); None
-          }
-      finally { lock.readLock().unlock() }
+  def loadRecommender(path: String) = {
+    lock.readLock().lock()
+    try {
+      Some(LocalPredictor(WideAndDeep.loadModel[Float](path)))
     }
-    else {
-      println(s"Cannot update bigDL model at $currentDir$path")
-      None
+    catch {
+      case e: Exception => println(s"Cannot load bigDL model at $currentDir$path"); None
     }
+    finally { lock.readLock().unlock() }
   }
 
   def loadMleap(modelPath: String): Option[Transformer] = {
@@ -132,24 +145,23 @@ object ModelParams {
 
   def loadArrayFile(path: String): Option[Array[String]] = {
     lock.readLock().lock()
-    try Some(Source.fromFile(currentDir + "/" + path).getLines().drop(1)
-      .flatMap(_.split(",")).toArray)
+    try Some(Source.fromFile(currentDir + "/" + path).getLines().map(_.toString.trim).toArray.distinct)
     catch {
       case _: Exception => println(s"Cannot load array at $currentDir$path"); None
     }
     finally { lock.readLock().unlock() }
   }
 
-  def refresh(params: ModelParams): ModelParams = {
-    params.wndModel = loadBigDL(params.wndModelPath)
-    params.wndModelVersion = loadVersion(params.wndModelPath)
-    params.userIndexerModel = loadMleap(params.userIndexerModelPath)
-    params.userIndexerModelVersion = loadVersion(params.userIndexerModelPath)
-    params.itemIndexerModel = loadMleap(params.itemIndexerModelPath)
-    params.itemIndexerModelVersion = loadVersion(params.itemIndexerModelPath)
-    params.atcArray = loadArrayFile(params.atcArrayPath)
-    params.atcArrayVersion = loadVersion(params.atcArrayPath)
-    params
-  }
+//  def refresh(params: ModelParams): ModelParams = {
+//    params.wndModel = loadBigDL(params.wndModelPath)
+//    params.wndModelVersion = loadVersion(params.wndModelPath)
+//    params.userIndexerModel = loadMleap(params.userIndexerModelPath)
+//    params.userIndexerModelVersion = loadVersion(params.userIndexerModelPath)
+//    params.itemIndexerModel = loadMleap(params.itemIndexerModelPath)
+//    params.itemIndexerModelVersion = loadVersion(params.itemIndexerModelPath)
+//    params.atcArray = loadArrayFile(params.atcArrayPath)
+//    params.atcArrayVersion = loadVersion(params.atcArrayPath)
+//    params
+//  }
 
 }

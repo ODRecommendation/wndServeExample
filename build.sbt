@@ -11,9 +11,10 @@ scalaVersion := "2.11.12"
 val jacksonVersion = "2.6.7"
 val sparkVersion = "2.3.1"
 val analyticsZooVersion = "0.3.0"
+val bigDLVersion = "0.7.1"
 
 libraryDependencies += guice
-libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.7.1-spark_2.3.1" % analyticsZooVersion
+libraryDependencies += "com.intel.analytics.zoo" % s"analytics-zoo-bigdl_$bigDLVersion-spark_$sparkVersion" % analyticsZooVersion withSources() withJavadoc()
 libraryDependencies += "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion
 libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.11.354"
 libraryDependencies += "ml.combust.mleap" %% "mleap-spark" % "0.12.0"

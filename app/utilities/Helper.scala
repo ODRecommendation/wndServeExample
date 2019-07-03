@@ -8,10 +8,11 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.models.recommendation.{ColumnFeatureInfo, UserItemFeature}
 import ml.combust.mleap.runtime.frame.Transformer
 import ml.combust.mleap.runtime.serialization.FrameReader
+import models.LoadModel
 
 import scala.collection.immutable.{List, Map}
 
-trait Helper{
+trait Helper extends LoadModel{
 
   def categoricalFromVocabList(vocabList: Array[String]): String => Int = {
     val func = (sth: String) => {
@@ -31,52 +32,48 @@ trait Helper{
 
   def assemblyFeature(
                        requestMap2: Map[String, Any],
-                       ATCSKUVocabs: Array[String],
+                       dmaArray: Array[String],
+                       modelArray: Array[String],
+                       hrArray: Array[String],
                        columnInfo: ColumnFeatureInfo,
                        bucketSize: Int
                      ) = {
-    val atcArray = requestMap2("ATC_SKU").asInstanceOf[Seq[String]]
-    val atcMap = atcArray.zipWithIndex.map(x => (x._2.toString, x._1)).toMap
-    println(atcMap)
 
-    val joined = atcArray.map(
+    val candidates = params.candidatesArray.get
+    candidates.foreach(
+      println(_)
+    )
+    val candidatesMap = candidates.zipWithIndex.map(x => (x._2.toString, x._1)).toMap
+
+    val joined = candidates.map(
       x => {
-        val ATC_SKU = categoricalFromVocabList(ATCSKUVocabs)(x)
-        val customer_type_nm = categoricalFromVocabList(Array("CONSUMER", "BUSINESS", "HOME OFFICE"))(requestMap2("customer_type_nm").toString)
-        val GENDER_CD = categoricalFromVocabList(Array("M", "F", "U"))(requestMap2("GENDER_CD").toString)
-        val loyalty_ct = buckBucket(bucketSize)(requestMap2("loyalty_ind").toString, requestMap2("customer_type_nm").toString)
-        val loyalty_ind = requestMap2("loyalty_ind").toString.toInt
-        val od_card_user_ind = requestMap2("od_card_user_ind").toString.toInt
-        val hvb_flg = requestMap2("hvb_flg").toString.toInt
-        val agent_smb_flg = requestMap2("agent_smb_flg").toString.toInt
-        val interval_avg_day_cnt = requestMap2("interval_avg_day_cnt").toString.toDouble
-        val SKU_NUM = requestMap2("itemId").toString.toInt
-        val STAR_RATING_AVG = requestMap2("STAR_RATING_AVG").toString.toDouble
-        val reviews_cnt = requestMap2("reviews_cnt").toString.toInt
-        val sales_flg = requestMap2("sales_flg").toString.toInt
-        val userId = requestMap2("userId").toString.toInt
-
+        val dma = categoricalFromVocabList(dmaArray)(requestMap2("dma").toString)
+        val model = categoricalFromVocabList(modelArray)(requestMap2("model").toString)
+        val hr = categoricalFromVocabList(hrArray)(requestMap2("hr").toString)
+        val weekend_ind = requestMap2("weekend_ind").toString.toInt
+        val location_ind = requestMap2("location_ind").toString.toInt
+        val push_ind = requestMap2("push_ind").toString.toInt
+        val email_ind = requestMap2("email_ind").toString.toInt
+        val itemId = leapTransform(x, "coupon", "itemId", params.itemIndexerModel.get, mapper)
+        val hr_weekend = buckBucket(bucketSize)(requestMap2("hr").toString, requestMap2("weekend_ind").toString)
+        val userId = leapTransform(requestMap2("aid").toString, "aid", "userId", params.userIndexerModel.get, mapper)
         val joined = Map(
-          "atcSKU" -> ATC_SKU,
-          "customer_type_nm" -> customer_type_nm,
-          "GENDER_CD" -> GENDER_CD,
-          "loyalty-ct" -> loyalty_ct,
-          "loyalty_ind" -> loyalty_ind,
-          "od_card_user_ind" -> od_card_user_ind,
-          "hvb_flg" -> hvb_flg,
-          "agent_smb_flg" -> agent_smb_flg,
-          "interval_avg_day_cnt" -> interval_avg_day_cnt,
-          "itemId" -> SKU_NUM,
-          "STAR_RATING_AVG" -> STAR_RATING_AVG,
-          "reviews_cnt" -> reviews_cnt,
-          "sales_flg" -> sales_flg,
-          "userId" -> userId
+          "userId" -> userId.toInt,
+          "itemId" -> itemId.toInt,
+          "label" -> 1,
+          "hr-weekend" -> hr_weekend,
+          "dma" -> dma,
+          "model" -> model,
+          "hr" -> hr,
+          "weekend_ind" -> weekend_ind,
+          "location_ind" -> location_ind,
+          "push_ind" -> push_ind,
+          "email_ind" -> email_ind
         )
-
         joined
       }
     )
-    (joined, atcMap)
+    (joined, candidatesMap)
   }
 
   def getWideTensor(joined: Map[String, Any], columnInfo: ColumnFeatureInfo): Tensor[Float] = {
